@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practitioner Dashboard - HealthCredX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-semibold text-gray-900">HealthCredX</span>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <a href="/practitioner/upload" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        Upload Documents
+                    </a>
+                    <a href="/logout" class="text-sm text-gray-600 hover:text-gray-900">Logout</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Main -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 p-4 rounded-md {% if category == 'success' %}bg-green-50 text-green-700{% elif category == 'danger' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">Welcome back, {{ session.user_name }}</h1>
+            <p class="text-gray-600 mt-1">{{ session.practitioner_type or 'Healthcare Professional' }}</p>
+        </div>
+        
+        <!-- Active Credential -->
+        {% if credential %}
+        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-8 shadow-sm">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-1">Active Credential</h2>
+                    <p class="text-sm text-gray-600 mb-4">Your credential is verified and blockchain-certified</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">Issued:</span>
+                            <span class="ml-2 font-medium text-gray-900">{{ credential.issued_at[:10] if credential.issued_at else 'N/A' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Expires:</span>
+                            <span class="ml-2 font-medium text-gray-900">{{ credential.expires_at[:10] if credential.expires_at else 'N/A' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <span class="text-xs text-gray-500">Blockchain Hash</span>
+                        <div class="mt-1 p-2 bg-gray-50 rounded border border-gray-200 font-mono text-xs text-gray-700 break-all">
+                            {{ credential.blockchain_hash }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <div>
+                    <h3 class="text-sm font-medium text-yellow-800">No active credential</h3>
+                    <p class="mt-1 text-sm text-yellow-700">Upload your documents to get verified and receive your blockchain credential.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        </div>
+        
+        <!-- Appointments Section -->
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Upcoming Appointments</h2>
+            </div>
+            
+            {% if appointments %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aadhar</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for appt in appointments %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ appt.date_time.replace('T', ' ') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ appt.patient_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ appt.aadhar_number or 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if appt.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif appt.status == 'cancelled' %}bg-red-100 text-red-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ appt.status.title() }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                {% if appt.status == 'scheduled' %}
+                                <a href="/practitioner/visit/{{ appt.id }}" class="text-purple-600 hover:text-purple-900">Start Visit</a>
+                                {% else %}
+                                <span class="text-gray-400">View Record</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="px-6 py-12 text-center">
+                <p class="text-gray-500">No appointments scheduled.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Verification History -->
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Verification History</h2>
+            </div>
+            
+            {% if verifications %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for ver in verifications %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{{ ver.id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ ver.created_at[:10] }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if ver.status == 'approved' %}bg-green-100 text-green-800
+                                    {% elif ver.status == 'pending_admin' %}bg-yellow-100 text-yellow-800
+                                    {% elif ver.status == 'pending_org' %}bg-blue-100 text-blue-800
+                                    {% elif ver.status == 'dismissed' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ ver.status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if ver.ai_score %}
+                                    <span class="font-semibold text-purple-600">{{ ver.ai_score }}/100</span>
+                                {% else %}
+                                    <span class="text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if ver.status == 'submitted' %}
+                                <button onclick="analyzeVerification({{ ver.id }})" class="text-purple-600 hover:text-purple-800 font-medium">
+                                    Run Analysis
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="px-6 py-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <p class="mt-2 text-sm text-gray-600">No verifications yet</p>
+                <p class="mt-1 text-sm text-gray-500">Upload your documents to get started</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <script>
+        async function analyzeVerification(verId) {
+            if (!confirm('Run AI analysis on this verification?')) return;
+            try {
+                const response = await fetch(`/api/analyze-verification/${verId}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`AI Analysis Complete!\nScore: ${result.score}/100`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Analysis failed'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script>
+</body>
+</html>

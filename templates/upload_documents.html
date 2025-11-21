@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Documents - HealthCredX</title><script src="https://cdn.tailwindcss.com"></script>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); body{font-family:'Inter',sans-serif;}</style></head>
+<body class="bg-gray-50">
+<header class="bg-white border-b border-gray-200"><nav class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+<div class="flex items-center gap-3"><div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg></div>
+<span class="text-lg font-semibold text-gray-900">HealthCredX</span></div>
+<a href="/practitioner/dashboard" class="text-sm text-gray-600 hover:text-gray-900">← Back to Dashboard</a></nav></header>
+<main class="max-w-3xl mx-auto px-4 py-8">
+<div class="mb-8"><h1 class="text-2xl font-bold text-gray-900">Upload Medical Documents</h1>
+<p class="text-gray-600 mt-2">Upload your credentials for AI verification (PNG, JPG, PDF)</p></div>
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+<div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all">
+<svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+<h3 class="mt-4 text-base font-medium text-gray-900">Drop files here or click to browse</h3>
+<p class="mt-2 text-sm text-gray-500">Medical degrees, licenses, or certificates</p>
+<input type="file" id="fileInput" multiple accept=".png,.jpg,.jpeg,.pdf" class="hidden"></div>
+<div id="fileList" class="mt-6 space-y-3"></div>
+<button id="uploadBtn" onclick="uploadDocuments()" disabled class="mt-6 w-full py-3 px-4 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
+Submit for Verification</button></div></main>
+<script>
+let selectedFiles=[];const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput'),fileList=document.getElementById('fileList'),uploadBtn=document.getElementById('uploadBtn');
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('border-purple-400','bg-purple-50/50');});
+dropZone.addEventListener('dragleave',()=>{dropZone.classList.remove('border-purple-400','bg-purple-50/50');});
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('border-purple-400','bg-purple-50/50');handleFiles(e.dataTransfer.files);});
+fileInput.addEventListener('change',e=>handleFiles(e.target.files));
+function handleFiles(files){selectedFiles=Array.from(files);displayFiles();uploadBtn.disabled=selectedFiles.length===0;}
+function displayFiles(){fileList.innerHTML='';selectedFiles.forEach((file,i)=>{const div=document.createElement('div');div.className='flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200';
+div.innerHTML=`<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+<span class="flex-1 text-sm text-gray-700">${file.name}</span>
+<select class="document-type px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-purple-500 focus:border-purple-500" data-index="${i}">
+<option value="Medical Degree">Medical Degree</option><option value="License">License</option><option value="Certificate">Certificate</option><option value="Other">Other</option></select>
+<button onclick="removeFile(${i})" class="text-red-600 hover:text-red-800"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>`;
+fileList.appendChild(div);});}
+function removeFile(i){selectedFiles.splice(i,1);displayFiles();uploadBtn.disabled=selectedFiles.length===0;}
+async function uploadDocuments(){if(selectedFiles.length===0)return;const formData=new FormData(),docTypes=document.querySelectorAll('.document-type');
+selectedFiles.forEach((file,i)=>{formData.append('documents',file);formData.append('document_types',docTypes[i].value);});
+uploadBtn.disabled=true;uploadBtn.innerHTML='Uploading...';
+try{const r=await fetch('/practitioner/upload',{method:'POST',body:formData}),result=await r.json();
+if(result.success){alert('Documents uploaded! AI analysis will begin.');location.href='/practitioner/dashboard';}else{alert('Error: '+(result.error||'Upload failed'));uploadBtn.disabled=false;uploadBtn.innerHTML='Submit for Verification';}}
+catch(e){alert('Network error: '+e.message);uploadBtn.disabled=false;uploadBtn.innerHTML='Submit for Verification';}}
+</script><script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script></body></html>

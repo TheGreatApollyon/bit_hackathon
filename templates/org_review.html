@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organization Review - HealthCredX</title><script src="https://cdn.tailwindcss.com"></script>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');body{font-family:'Inter',sans-serif;}</style></head>
+<body class="p-6"><div class="max-w-4xl mx-auto"><div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+<div class="mb-6"><h1 class="text-2xl font-bold text-gray-900">Review Verification #{{verification.id}}</h1>
+<p class="text-sm text-gray-600 mt-1">Submitted by {{user_info.name}} ({{user_info.practitioner_type}})</p></div>
+<div class="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
+<div class="flex items-center justify-between"><div><p class="text-sm text-purple-700 font-medium">AI Authenticity Score</p>
+<p class="text-4xl font-bold text-purple-900 mt-2">{{verification.ai_score}}<span class="text-xl text-purple-600">/100</span></p></div>
+<div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center"><svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div></div></div>
+{% if ai_analysis %}<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6"><h3 class="text-sm font-semibold text-gray-900 mb-2">AI Analysis Details</h3>
+<pre class="text-xs text-gray-700 overflow-x-auto">{{ai_analysis|tojson(indent=2)}}</pre></div>{% endif %}
+<div class="mb-6"><h3 class="text-sm font-semibold text-gray-900 mb-3">Uploaded Documents</h3>
+<ul class="space-y-2">{% for doc in documents %}<li class="flex items-center gap-2 text-sm text-gray-700 p-3 bg-gray-50 rounded-lg border border-gray-200">
+<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+<span class="flex-1">{{doc.filename}}</span><span class="text-xs text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">{{doc.document_type}}</span></li>{% endfor %}</ul></div>
+<div class="mb-6"><label class="block text-sm font-semibold text-gray-900 mb-2">Your Review Comments</label>
+<textarea id="comments" rows="4" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-purple-500 focus:border-purple-500" placeholder="Add your review comments..."></textarea></div>
+<div class="flex gap-3"><button onclick="submitReview('approved')" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Approve</button>
+<button onclick="submitReview('rejected')" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Reject</button>
+<button onclick="history.back()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium">Cancel</button></div>
+</div></div>
+<script>
+async function submitReview(verdict){const comments=document.getElementById('comments').value;
+try{const r=await fetch('/api/organization/submit-review/{{verification.id}}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({verdict,comments})});
+const result=await r.json();if(result.success){alert('Review submitted successfully!');location.href='/organization/dashboard';}else alert('Error submitting review');}
+catch(e){alert('Error: '+e.message);}}
+</script><script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script></body></html>

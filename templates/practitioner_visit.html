@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Visit - HealthCredX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body>
+    <header class="bg-white border-b border-gray-200">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-semibold text-gray-900">HealthCredX Practitioner</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/practitioner/dashboard" class="text-sm text-gray-600 hover:text-gray-900">Back to Dashboard</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Patient Info -->
+            <div class="lg:col-span-1">
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Patient Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-gray-500 uppercase">Name</label>
+                            <p class="text-sm font-medium text-gray-900">{{ appointment.patient_name }}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 uppercase">Aadhar Number</label>
+                            <p class="text-sm font-medium text-gray-900">{{ appointment.aadhar_number or 'N/A' }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 uppercase">Gender</label>
+                                <p class="text-sm font-medium text-gray-900">{{ appointment.gender or 'N/A' }}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 uppercase">Age</label>
+                                <p class="text-sm font-medium text-gray-900">
+                                    {% if appointment.dob %}
+                                    <script>document.write(new Date().getFullYear() - new Date('{{ appointment.dob }}').getFullYear())</script>
+                                    {% else %}N/A{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs text-gray-500 uppercase">Weight</label>
+                                <p class="text-sm font-medium text-gray-900">{{ appointment.weight }} kg</p>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 uppercase">Blood Type</label>
+                                <p class="text-sm font-medium text-gray-900">{{ appointment.blood_type }}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 uppercase">Existing Conditions</label>
+                            <p class="text-sm text-gray-700 mt-1">{{ appointment.existing_conditions or 'None' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diagnosis Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6">Medical Record Entry</h2>
+                    
+                    <form action="/practitioner/visit/{{ appointment.id }}" method="POST" class="space-y-6">
+                        <div>
+                            <label for="diagnosis" class="block text-sm font-medium text-gray-700">Diagnosis</label>
+                            <div class="mt-1">
+                                <textarea id="diagnosis" name="diagnosis" rows="4" required class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 border" placeholder="Enter detailed diagnosis..."></textarea>
+                            </div>
+                            <p class="mt-2 text-sm text-gray-500">AI will verify and structure this text.</p>
+                        </div>
+
+                        <div>
+                            <label for="prescription" class="block text-sm font-medium text-gray-700">Prescription</label>
+                            <div class="mt-1">
+                                <textarea id="prescription" name="prescription" rows="4" required class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 border" placeholder="Rx: Medicine Name - Dosage - Frequency..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label for="signature" class="block text-sm font-medium text-gray-700">Digital Signature</label>
+                            <div class="mt-1 flex gap-4">
+                                <input type="text" id="signature" name="signature" required class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="Type full name to sign">
+                                <div class="flex items-center text-green-600 text-sm">
+                                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    Verified
+                                </div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">This signature will be cryptographically hashed on the blockchain.</p>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                Submit & Secure on Blockchain
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

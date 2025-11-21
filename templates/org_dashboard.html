@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organization Dashboard - HealthCredX</title><script src="https://cdn.tailwindcss.com"></script>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');body{font-family:'Inter',sans-serif;}</style></head>
+<body><header class="bg-white border-b border-gray-200"><nav class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+<div class="flex items-center gap-3"><div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center"><svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+<span class="text-lg font-semibold text-gray-900">HealthCredX</span>
+<span class="text-sm text-gray-500">Organization Portal</span></div>
+<a href="/logout" class="text-sm text-gray-600 hover:text-gray-900">Logout</a></nav></header>
+<main class="max-w-7xl mx-auto px-4 py-8">
+<h1 class="text-2xl font-bold text-gray-900 mb-2">Pending Reviews</h1>
+<p class="text-gray-600 mb-8">Review practitioner verifications awaiting your approval</p>
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+<div class="px-6 py-4 border-b border-gray-200"><h2 class="text-lg font-semibold text-gray-900">Pending Verifications</h2></div>
+{% if verifications %}
+<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200">
+<thead class="bg-gray-50"><tr>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Practitioner</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AI Score</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+</tr></thead>
+<tbody class="bg-white divide-y divide-gray-200">
+{% for ver in verifications %}
+<tr class="hover:bg-gray-50">
+<td class="px-6 py-4 text-sm font-medium text-gray-900">#{{ver.id}}</td>
+<td class="px-6 py-4 text-sm text-gray-900">{{ver.user_name}}</td>
+<td class="px-6 py-4 text-sm text-gray-600">{{ver.practitioner_type}}</td>
+<td class="px-6 py-4 text-sm"><strong class="text-purple-600">{{ver.ai_score}}/100</strong></td>
+<td class="px-6 py-4 text-sm text-gray-600">{{ver.created_at[:10]}}</td>
+<td class="px-6 py-4 text-sm"><a href="/organization/review/{{ver.id}}" class="text-purple-600 hover:text-purple-800 font-medium">Review →</a></td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<div class="px-6 py-12 text-center text-gray-500"><svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+<p class="mt-2 text-sm">No pending verifications</p></div>
+{% endif %}
+</div></main><script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script></body></html>
