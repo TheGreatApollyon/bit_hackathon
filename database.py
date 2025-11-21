@@ -132,6 +132,8 @@ def init_db():
             hospital_id INTEGER NOT NULL,
             date_time TIMESTAMP NOT NULL,
             department TEXT,
+            symptoms TEXT,
+            notes TEXT,
             status TEXT DEFAULT 'scheduled' CHECK(status IN ('scheduled', 'completed', 'cancelled')),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (patient_id) REFERENCES users(id),
@@ -181,6 +183,7 @@ def init_db():
     
     # Seed demo data
     seed_demo_data()
+    seed_comprehensive_data()
 
 def seed_demo_data():
     """Seed the database with demo accounts if they don't exist"""
@@ -243,6 +246,72 @@ def seed_demo_data():
     conn.commit()
     conn.close()
     print("✓ Database initialized")
+
+def seed_comprehensive_data():
+    """Seed database with rich test data for relentless testing"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    print("Seeding comprehensive data...")
+    
+    # 1. Get IDs of seeded users
+    cursor.execute("SELECT id FROM users WHERE email='patient@test.com'")
+    patient = cursor.fetchone()
+    cursor.execute("SELECT id FROM users WHERE email='doctor@test.com'")
+    doctor = cursor.fetchone()
+    cursor.execute("SELECT id FROM users WHERE email='hospital@test.com'")
+    hospital = cursor.fetchone()
+    
+    if not (patient and doctor and hospital):
+        print("Error: Basic users not found. Run basic seed first.")
+        conn.close()
+        return
+
+    patient_id = patient['id']
+    doctor_id = doctor['id']
+    hospital_id = hospital['id']
+
+    # 2. Create Patient Profile
+    cursor.execute("INSERT OR IGNORE INTO patient_profiles (user_id, aadhar_number, dob, gender, blood_type, weight, height, existing_conditions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                   (patient_id, "1234-5678-9012", "1985-06-15", "Male", "O+", 75.5, 178.0, "Asthma, Seasonal Allergies"))
+
+    # 3. Create Past Appointments & Medical Records (Rich History)
+    
+    # Record 1: 6 months ago - General Checkup
+    date_1 = (datetime.now() - timedelta(days=180)).isoformat()
+    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (patient_id, doctor_id, hospital_id, date_1, 'completed', 'General Medicine', 'Routine checkup, mild fatigue'))
+    appt_id_1 = cursor.lastrowid
+    
+    cursor.execute("INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash) VALUES (?, ?, ?, ?, ?)",
+                   (appt_id_1, "Vitamin D Deficiency", "Vitamin D3 60k IU - Weekly once for 8 weeks", "sig_mock_123", "hash_mock_123"))
+
+    # Record 2: 2 months ago - Acute Bronchitis
+    date_2 = (datetime.now() - timedelta(days=60)).isoformat()
+    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (patient_id, doctor_id, hospital_id, date_2, 'completed', 'Pulmonology', 'Cough, difficulty breathing, wheezing'))
+    appt_id_2 = cursor.lastrowid
+    
+    cursor.execute("INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash) VALUES (?, ?, ?, ?, ?)",
+                   (appt_id_2, "Acute Bronchitis Exacerbation", "Levosalbutamol Inhaler - SOS, Montelukast 10mg - Nightly", "sig_mock_456", "hash_mock_456"))
+
+    # Record 3: 1 week ago - Injury
+    date_3 = (datetime.now() - timedelta(days=7)).isoformat()
+    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (patient_id, doctor_id, hospital_id, date_3, 'completed', 'Orthopedics', 'Ankle pain, swelling after fall'))
+    appt_id_3 = cursor.lastrowid
+    
+    cursor.execute("INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash) VALUES (?, ?, ?, ?, ?)",
+                   (appt_id_3, "Grade 1 Ankle Sprain", "Rest, Ice, Compression, Elevation. Ibuprofen 400mg - SOS for pain", "sig_mock_789", "hash_mock_789"))
+
+    # 4. Future Appointment
+    date_4 = (datetime.now() + timedelta(days=5)).isoformat()
+    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (patient_id, doctor_id, hospital_id, date_4, 'scheduled', 'General Medicine', 'Follow up for ankle'))
+
+    conn.commit()
+    conn.close()
+    print("✓ Comprehensive data seeded")
 
 # User operations
 def create_user(email, password, name, role, practitioner_type=None, organization_name=None):

@@ -123,7 +123,7 @@ def chat_with_history(context, user_query):
         return "AI service is currently unavailable."
 
     try:
-        chat_model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        chat_model = genai.GenerativeModel('gemini-flash-latest')
         
         prompt = f"""
         You are a helpful medical assistant for a patient.

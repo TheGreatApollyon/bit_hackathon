@@ -185,16 +185,33 @@
             input.value = '';
             history.scrollTop = history.scrollHeight;
             
-            // Simulate AI response (Mock)
-            setTimeout(() => {
+            // Call Real AI API
+            fetch('/api/patient/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: text })
+            })
+            .then(response => response.json())
+            .then(data => {
                 history.innerHTML += `
                     <div class="flex gap-2">
                         <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
-                        <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">Based on your records, that seems to be related to your recent visit for ${text.includes('pain') ? 'pain management' : 'general checkup'}. Please consult your doctor for specific advice.</div>
+                        <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">${data.response}</div>
                     </div>
                 `;
                 history.scrollTop = history.scrollHeight;
-            }, 1000);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                history.innerHTML += `
+                    <div class="flex gap-2">
+                        <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center text-xs">!</div>
+                        <div class="bg-red-500/20 rounded-lg rounded-tl-none p-2 text-sm">Sorry, I couldn't connect to the AI service.</div>
+                    </div>
+                `;
+            });
         }
     </script>
 </body>
