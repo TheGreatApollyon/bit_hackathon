@@ -1,6 +1,7 @@
 # 🏥 HealthCredX
 
 > **AI-Powered Healthcare Management Platform with Blockchain Credential Verification**
+Live demo: https://bit-hackathon-v3ma.onrender.com/
 
 HealthCredX is a comprehensive healthcare management platform that revolutionizes medical credential verification, patient care coordination, and prescription management using cutting-edge AI and blockchain technology.
 

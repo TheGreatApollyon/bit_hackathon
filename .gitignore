@@ -3,3 +3,6 @@ __pycache__
 *.md
 !README.md
 !RENDER_DEPLOY.md
+!task.md
+!implementation_plan.md
+!walkthrough.md

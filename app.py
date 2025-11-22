@@ -741,15 +741,19 @@ def patient_ai_assistant():
     appointments = db.get_appointments_by_user(patient_id, 'patient')
     medical_history = db.get_patient_history(patient_id)
     
-    # Create simplified history for context
-    history_text = ""
-    for record in medical_history[:5]:  # Last 5 records
-        history_text += f"{record['date_time'][:10]}: {record['diagnosis_text']}\n"
-    
-    context = {
-        'appointments': appointments,
-        'medical_history': history_text
-    }
+# Create full medical history for context (up to 20 recent records)
+history_text = ""
+for record in medical_history[:20]:  # Last 20 records
+    # Include date, diagnosis, and any notes if available
+    entry = f"{record['date_time'][:10]}: {record['diagnosis_text']}"
+    if record.get('notes'):
+        entry += f" (Notes: {record['notes']})"
+    history_text += entry + "\n"
+
+context = {
+    'appointments': appointments,
+    'medical_history': history_text
+}
     
     # Get AI response
     result = ai_assistant.patient_assistant(user_query, patient_id, context)
