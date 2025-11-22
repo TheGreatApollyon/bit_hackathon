@@ -19,9 +19,9 @@ if api_key:
             'gemini-2.5-flash',
             generation_config={"response_mime_type": "application/json"}
         )
-    except:
-        # Fallback if specific version issue, though list confirmed it exists
-        model = genai.GenerativeModel('gemini-1.5-flash')
+    except Exception as e:
+        print(f"Error initializing Gemini 2.5 Flash: {e}")
+        model = None
 else:
     model = None
 
@@ -123,7 +123,7 @@ def chat_with_history(context, user_query):
         return "AI service is currently unavailable."
 
     try:
-        chat_model = genai.GenerativeModel('gemini-flash-latest')
+        chat_model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
         You are a helpful medical assistant for a patient.
@@ -141,6 +141,35 @@ def chat_with_history(context, user_query):
         return response.text
     except Exception as e:
         print(f"Error in chat_with_history: {e}")
+        return "I'm sorry, I encountered an error processing your request."
+
+def analyze_handwriting(image_path):
+    """
+    Analyze handwritten diagnosis/prescription using Gemini 2.5 Flash
+    """
+    if not api_key:
+        return "AI service is currently unavailable."
+
+    try:
+        # Initialize model
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        # Load image
+        image_file = genai.upload_file(path=image_path)
+        
+        # Prompt
+        prompt = """
+        You are a medical assistant. Transcribe this handwritten medical note.
+        Return ONLY the transcribed text. If there are distinct sections for Diagnosis and Prescription, separate them with a pipe character '|'.
+        Example: "Acute Bronchitis | Amoxicillin 500mg"
+        If only one is present, just return the text.
+        """
+        
+        response = model.generate_content([prompt, image_file])
+        return response.text.strip()
+        
+    except Exception as e:
+        print(f"AI Error: {str(e)}")
         return "I'm sorry, I encountered an error processing your request."
 
 def batch_analyze_documents(document_paths):
@@ -205,6 +234,37 @@ def get_verification_summary(analysis_result):
         summary += f"\nConcerns: {', '.join(analysis['concerns'])}"
     
     return summary
+
+def chat_with_dashboard_data(context, user_query):
+    """
+    Chat with the AI using dashboard data as context.
+    """
+    if not api_key:
+        return "AI service is currently unavailable."
+
+    try:
+        chat_model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        prompt = f"""
+        You are an intelligent assistant for the HealthCredX Admin Dashboard.
+        You have access to the following real-time data from the platform:
+        
+        {context}
+        
+        User Query: {user_query}
+        
+        Answer the query based on the data provided. 
+        - Be concise and professional.
+        - If asked for specific numbers, use the provided data.
+        - If the answer is not in the data, say you don't have that information.
+        - You can perform simple calculations (e.g., percentages, sums) if needed.
+        """
+        
+        response = chat_model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        print(f"Error in chat_with_dashboard_data: {e}")
+        return "I'm sorry, I encountered an error processing your request."
 
 # For testing
 if __name__ == '__main__':

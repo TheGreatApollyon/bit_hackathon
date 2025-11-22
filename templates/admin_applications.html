@@ -1,0 +1,84 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Practitioner Applications</h1>
+        <p class="text-gray-600">Manage verification requests from practitioners</p>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="border-b border-gray-200 mb-6">
+    <nav class="-mb-px flex space-x-8">
+        <a href="{{ url_for('admin_applications', status='pending') }}" 
+           class="{% if current_status == 'pending' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Pending
+        </a>
+        <a href="{{ url_for('admin_applications', status='approved') }}" 
+           class="{% if current_status == 'approved' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Approved
+        </a>
+        <a href="{{ url_for('admin_applications', status='rejected') }}" 
+           class="{% if current_status == 'rejected' %}border-purple-500 text-purple-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+            Rejected
+        </a>
+    </nav>
+</div>
+
+<!-- Applications Table -->
+<div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    {% if applications %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Practitioner</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">AI Score</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for app in applications %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ app.created_at[:10] }}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                        {{ app.user_name }}<br>
+                        <span class="text-xs text-gray-500">{{ app.user_email }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ app.practitioner_type }}</td>
+                    <td class="px-6 py-4 text-sm">
+                        {% if app.ai_score %}
+                        <span class="font-semibold {% if app.ai_score > 80 %}text-green-600{% elif app.ai_score > 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                            {{ app.ai_score }}/100
+                        </span>
+                        {% else %}
+                        <span class="text-gray-400">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full 
+                            {% if app.status == 'approved' %}bg-green-100 text-green-800
+                            {% elif app.status in ['dismissed', 'org_rejected'] %}bg-red-100 text-red-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ app.status|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm">
+                        <a href="{{ url_for('admin_review_detail', ver_id=app.id) }}" class="text-purple-600 hover:text-purple-900 font-medium">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="px-6 py-12 text-center text-gray-500">
+        <p class="text-sm">No applications found in this category.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

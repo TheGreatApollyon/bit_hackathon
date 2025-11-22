@@ -35,69 +35,63 @@
                     {% endif %}
                 {% endwith %}
                 
-                <form method="POST" action="/login" class="space-y-6">
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
-                        <input type="email" id="email" name="email" required 
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
-                    </div>
+                <div class="text-center mb-6">
+                    <p class="text-sm text-gray-500">Select a role to access the demo environment</p>
+                </div>
 
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" id="password" name="password" required 
-                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
-                    </div>
-
-                    <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                        Sign in
-                    </button>
+                <form method="POST" action="/login" class="hidden">
+                    <input type="email" id="email" name="email">
+                    <input type="password" id="password" name="password">
                 </form>
 
-                <div class="mt-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">Quick demo access</span>
-                        </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="quickLogin('admin@healthcredx.com', 'admin123')" type="button"
+                            class="w-full inline-flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm bg-gray-900 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
+                        <span class="mr-2">🛡️</span> Admin Access
+                    </button>
+
+                    <div class="relative py-2">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                        <div class="relative flex justify-center text-xs uppercase tracking-wider text-gray-500"><span class="bg-white px-2">Hospitals</span></div>
                     </div>
 
-                    <div class="mt-6 grid grid-cols-1 gap-3">
-                        <button onclick="quickLogin('admin@healthcredx.com', 'admin123')" type="button"
-                                class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Admin (admin@healthcredx.com)
-                        </button>
+                    <button onclick="quickLogin('hospital@test.com', 'password')" type="button"
+                            class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">
+                        🏥 City General Hospital
+                    </button>
+                    <button onclick="quickLogin('stmarys@test.com', 'password')" type="button"
+                            class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors">
+                        🏥 St. Mary's Medical Center
+                    </button>
 
-                        <button onclick="quickLogin('hospital@test.com', 'password')" type="button"
-                                class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Hospital (hospital@test.com)
-                        </button>
-
-                        <button onclick="quickLogin('doctor@test.com', 'password')" type="button"
-                                class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Doctor (doctor@test.com)
-                        </button>
-                        
-                        <button onclick="quickLogin('patient@test.com', 'password')" type="button"
-                                class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Patient (patient@test.com)
-                        </button>
-                        
-                        <button onclick="quickLogin('pharma@test.com', 'password')" type="button"
-                                class="w-full inline-flex justify-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Pharma (pharma@test.com)
-                        </button>
+                    <div class="relative py-2">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                        <div class="relative flex justify-center text-xs uppercase tracking-wider text-gray-500"><span class="bg-white px-2">Practitioners</span></div>
                     </div>
-                </div>
 
-                <div class="mt-6 text-center text-sm">
-                    <span class="text-gray-600">Don't have an account?</span>
-                    <a href="/register" class="font-medium text-purple-600 hover:text-purple-500 ml-1">Sign up</a>
-                </div>
-                
-                <div class="mt-4 text-center">
-                    <a href="/" class="text-sm text-gray-500 hover:text-gray-700">← Back to home</a>
+                    <button onclick="quickLogin('doctor@test.com', 'password')" type="button"
+                            class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-colors">
+                        👨‍⚕️ Dr. Sarah Smith (Gen. Phys.)
+                    </button>
+                    <button onclick="quickLogin('cardio@test.com', 'password')" type="button"
+                            class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-colors">
+                        👨‍⚕️ Dr. James Wilson (Cardio)
+                    </button>
+
+                    <div class="relative py-2">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+                        <div class="relative flex justify-center text-xs uppercase tracking-wider text-gray-500"><span class="bg-white px-2">Other Roles</span></div>
+                    </div>
+                    
+                    <button onclick="quickLogin('patient@test.com', 'password')" type="button"
+                            class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors">
+                        👤 John Doe (Patient)
+                    </button>
+                    
+                    <button onclick="quickLogin('pharma@test.com', 'password')" type="button"
+                            class="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 transition-colors">
+                        💊 MediCare Pharmacy
+                    </button>
                 </div>
             </div>
         </div>

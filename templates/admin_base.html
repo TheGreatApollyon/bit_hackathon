@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Portal - HealthCredX{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link.active { background-color: #F3E8FF; color: #7E22CE; }
+        .sidebar-link:hover:not(.active) { background-color: #F9FAFB; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
+        <div class="p-6 flex items-center gap-3 border-b border-gray-100">
+            <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <span class="text-lg font-bold text-gray-900">HealthCredX</span>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-lg {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+            <a href="{{ url_for('admin_applications') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-lg {% if request.endpoint == 'admin_applications' %}active{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Practitioner Apps
+            </a>
+            <a href="{{ url_for('admin_users') }}" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-lg {% if request.endpoint == 'admin_users' %}active{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Manage Users
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-200">
+            <a href="{{ url_for('logout') }}" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8 relative">
+        {% block content %}{% endblock %}
+        
+        <!-- Chatbot FAB -->
+        <div class="fixed bottom-8 right-8 z-50">
+            <button onclick="toggleChat()" class="w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all transform hover:scale-105">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+            </button>
+            
+            <!-- Chat Window -->
+            <div id="chat-window" class="hidden absolute bottom-16 right-0 w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col" style="height: 500px;">
+                <div class="bg-purple-600 p-4 flex justify-between items-center">
+                    <h3 class="text-white font-semibold">Admin Assistant</h3>
+                    <button onclick="toggleChat()" class="text-white hover:text-gray-200"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
+                    <div class="flex justify-start">
+                        <div class="bg-white border border-gray-200 rounded-lg rounded-tl-none px-4 py-2 max-w-[80%] text-sm text-gray-700 shadow-sm">
+                            Hello! Ask me anything about the dashboard data.
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-white border-t border-gray-200">
+                    <form onsubmit="sendMessage(event)" class="flex gap-2">
+                        <input type="text" id="chat-input" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Ask a question...">
+                        <button type="submit" class="bg-purple-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-purple-700">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleChat() {
+            const win = document.getElementById('chat-window');
+            win.classList.toggle('hidden');
+        }
+        
+        async function sendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+            
+            // Add user message
+            const chat = document.getElementById('chat-messages');
+            chat.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-purple-600 text-white rounded-lg rounded-tr-none px-4 py-2 max-w-[80%] text-sm shadow-sm">
+                        ${msg}
+                    </div>
+                </div>
+            `;
+            input.value = '';
+            chat.scrollTop = chat.scrollHeight;
+            
+            // Loading state
+            const loadingId = 'loading-' + Date.now();
+            chat.innerHTML += `
+                <div id="${loadingId}" class="flex justify-start">
+                    <div class="bg-white border border-gray-200 rounded-lg rounded-tl-none px-4 py-2 max-w-[80%] text-sm text-gray-500 shadow-sm">
+                        Thinking...
+                    </div>
+                </div>
+            `;
+            chat.scrollTop = chat.scrollHeight;
+            
+            try {
+                const res = await fetch('/api/admin/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: msg})
+                });
+                const data = await res.json();
+                
+                document.getElementById(loadingId).remove();
+                
+                chat.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-white border border-gray-200 rounded-lg rounded-tl-none px-4 py-2 max-w-[80%] text-sm text-gray-700 shadow-sm">
+                            ${data.response}
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                chat.innerHTML += `
+                    <div class="flex justify-start">
+                        <div class="bg-red-50 border border-red-200 rounded-lg rounded-tl-none px-4 py-2 max-w-[80%] text-sm text-red-600 shadow-sm">
+                            Error: ${err.message}
+                        </div>
+                    </div>
+                `;
+            }
+            chat.scrollTop = chat.scrollHeight;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/preline@2.4.1/dist/preline.min.js"></script>
+</body>
+</html>

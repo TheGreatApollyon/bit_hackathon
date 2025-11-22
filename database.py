@@ -161,9 +161,23 @@ def init_db():
             prescription_text TEXT,
             doctor_signature TEXT,
             pharma_status TEXT DEFAULT 'pending',
+            delivery_required BOOLEAN DEFAULT 0,
+            delivery_address TEXT,
             blockchain_hash TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+        )
+    ''')
+
+    # Inventory table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL, -- tablet, liquid, capsule, injection, etc.
+            unit_size TEXT NOT NULL, -- e.g., "500mg", "100ml", "10 tablets"
+            stock INTEGER DEFAULT 0,
+            price REAL DEFAULT 0.0
         )
     ''')
     
@@ -185,133 +199,192 @@ def init_db():
     seed_demo_data()
     seed_comprehensive_data()
 
-def seed_demo_data():
-    """Seed the database with demo accounts if they don't exist"""
+def reset_db():
+    """Reset database (drop all tables)"""
     conn = get_db()
     cursor = conn.cursor()
     
-    # 1. Hospital
-    cursor.execute('SELECT id FROM users WHERE email = ?', ('hospital@test.com',))
-    if not cursor.fetchone():
-        import auth
-        hashed_pw = auth.hash_password('password')
-        cursor.execute('''
-            INSERT INTO users (email, password, name, role, organization_name)
-            VALUES (?, ?, ?, ?, ?)
-        ''', ('hospital@test.com', hashed_pw, 'City General Hospital', 'hospital', 'City General Hospital'))
-        print("Seeded Hospital account")
-
-    # 2. Doctor
-    cursor.execute('SELECT id FROM users WHERE email = ?', ('doctor@test.com',))
-    if not cursor.fetchone():
-        import auth
-        hashed_pw = auth.hash_password('password')
-        # Generate keys for doctor
-        import crypto_utils
-        private_key, public_key = crypto_utils.generate_key_pair()
-        
-        cursor.execute('''
-            INSERT INTO users (email, password, name, role, practitioner_type)
-            VALUES (?, ?, ?, ?, ?)
-        ''', ('doctor@test.com', hashed_pw, 'Dr. Sarah Smith', 'practitioner', 'Doctor'))
-        user_id = cursor.lastrowid
-        
-        # Store keys using SAME cursor to avoid locking
-        cursor.execute('INSERT OR REPLACE INTO user_keys (user_id, private_key, public_key) VALUES (?, ?, ?)',
-                       (user_id, private_key, public_key))
-        print("Seeded Doctor account with keys")
-
-    # 3. Patient
-    cursor.execute('SELECT id FROM users WHERE email = ?', ('patient@test.com',))
-    if not cursor.fetchone():
-        import auth
-        hashed_pw = auth.hash_password('password')
-        cursor.execute('''
-            INSERT INTO users (email, password, name, role)
-            VALUES (?, ?, ?, ?)
-        ''', ('patient@test.com', hashed_pw, 'John Doe', 'patient'))
-        print("Seeded Patient account")
-
-    # 4. Pharma
-    cursor.execute('SELECT id FROM users WHERE email = ?', ('pharma@test.com',))
-    if not cursor.fetchone():
-        import auth
-        hashed_pw = auth.hash_password('password')
-        cursor.execute('''
-            INSERT INTO users (email, password, name, role, organization_name)
-            VALUES (?, ?, ?, ?, ?)
-        ''', ('pharma@test.com', hashed_pw, 'MediCare Pharmacy', 'pharma', 'MediCare Pharmacy'))
-        print("Seeded Pharma account")
+    tables = ['users', 'documents', 'verifications', 'credentials', 'verification_documents', 
+              'patient_profiles', 'appointments', 'user_keys', 'medical_records', 'inventory']
+    
+    for table in tables:
+        cursor.execute(f"DROP TABLE IF EXISTS {table}")
         
     conn.commit()
     conn.close()
-    print("✓ Database initialized")
+    print("✓ Database reset")
+    init_db()
 
-def seed_comprehensive_data():
-    """Seed database with rich test data for relentless testing"""
+def seed_demo_data():
+    """Seed the database with demo accounts"""
     conn = get_db()
     cursor = conn.cursor()
     
-    print("Seeding comprehensive data...")
+    import auth
+    import crypto_utils
+    hashed_pw = auth.hash_password('password')
     
-    # 1. Get IDs of seeded users
-    cursor.execute("SELECT id FROM users WHERE email='patient@test.com'")
-    patient = cursor.fetchone()
-    cursor.execute("SELECT id FROM users WHERE email='doctor@test.com'")
-    doctor = cursor.fetchone()
-    cursor.execute("SELECT id FROM users WHERE email='hospital@test.com'")
-    hospital = cursor.fetchone()
+    # 1. Hospitals
+    hospitals = [
+        ('hospital@test.com', 'City General Hospital'),
+        ('stmarys@test.com', 'St. Mary\'s Medical Center'),
+        ('apollo@test.com', 'Apollo Hospitals')
+    ]
     
-    if not (patient and doctor and hospital):
-        print("Error: Basic users not found. Run basic seed first.")
+    for email, name in hospitals:
+        cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO users (email, password, name, role, organization_name)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (email, hashed_pw, name, 'hospital', name))
+            print(f"Seeded {name}")
+
+    # 2. Doctors
+    doctors = [
+        ('doctor@test.com', 'Dr. Sarah Smith', 'General Physician'),
+        ('cardio@test.com', 'Dr. James Wilson', 'Cardiologist'),
+        ('ortho@test.com', 'Dr. Emily Chen', 'Orthopedic Surgeon'),
+        ('peds@test.com', 'Dr. Michael Brown', 'Pediatrician')
+    ]
+    
+    for email, name, type_ in doctors:
+        cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if not cursor.fetchone():
+            private_key, public_key = crypto_utils.generate_key_pair()
+            cursor.execute('''
+                INSERT INTO users (email, password, name, role, practitioner_type)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (email, hashed_pw, name, 'practitioner', type_))
+            user_id = cursor.lastrowid
+            cursor.execute('INSERT OR REPLACE INTO user_keys (user_id, private_key, public_key) VALUES (?, ?, ?)',
+                           (user_id, private_key, public_key))
+            print(f"Seeded {name}")
+
+    # 3. Patients
+    patients = [
+        ('patient@test.com', 'John Doe'),
+        ('jane@test.com', 'Jane Smith'),
+        ('bob@test.com', 'Bob Johnson')
+    ]
+    
+    for email, name in patients:
+        cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO users (email, password, name, role)
+                VALUES (?, ?, ?, ?)
+            ''', (email, hashed_pw, name, 'patient'))
+            print(f"Seeded {name}")
+
+    # 4. Pharma
+    pharmas = [
+        ('pharma@test.com', 'MediCare Pharmacy'),
+        ('wellness@test.com', 'Wellness Chemist')
+    ]
+    
+    for email, name in pharmas:
+        cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
+        if not cursor.fetchone():
+            cursor.execute('''
+                INSERT INTO users (email, password, name, role, organization_name)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (email, hashed_pw, name, 'pharma', name))
+            print(f"Seeded {name}")
+        
+    conn.commit()
+    conn.close()
+
+def seed_comprehensive_data():
+    """Seed database with rich test data"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Only seed if no appointments exist
+    cursor.execute("SELECT COUNT(*) as count FROM appointments")
+    if cursor.fetchone()['count'] > 0:
         conn.close()
+        # Still ensure inventory is seeded
+        seed_inventory()
         return
 
-    patient_id = patient['id']
-    doctor_id = doctor['id']
-    hospital_id = hospital['id']
+    print("Seeding comprehensive data...")
+    
+    # Get IDs
+    cursor.execute("SELECT id FROM users WHERE email='patient@test.com'")
+    patient_id = cursor.fetchone()['id']
+    cursor.execute("SELECT id FROM users WHERE email='doctor@test.com'")
+    doctor_id = cursor.fetchone()['id']
+    cursor.execute("SELECT id FROM users WHERE email='hospital@test.com'")
+    hospital_id = cursor.fetchone()['id']
 
-    # 2. Create Patient Profile
+    # Create Patient Profile
     cursor.execute("INSERT OR IGNORE INTO patient_profiles (user_id, aadhar_number, dob, gender, blood_type, weight, height, existing_conditions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                    (patient_id, "1234-5678-9012", "1985-06-15", "Male", "O+", 75.5, 178.0, "Asthma, Seasonal Allergies"))
 
-    # 3. Create Past Appointments & Medical Records (Rich History)
+    # Create Past Appointments
+    # ... (Keep existing appointment logic but maybe add more if needed, for now keeping it simple to avoid huge file)
     
-    # Record 1: 6 months ago - General Checkup
+    # Record 1
     date_1 = (datetime.now() - timedelta(days=180)).isoformat()
     cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (patient_id, doctor_id, hospital_id, date_1, 'completed', 'General Medicine', 'Routine checkup, mild fatigue'))
+                   (patient_id, doctor_id, hospital_id, date_1, 'completed', 'General Medicine', 'Routine checkup'))
     appt_id_1 = cursor.lastrowid
-    
     cursor.execute("INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash) VALUES (?, ?, ?, ?, ?)",
-                   (appt_id_1, "Vitamin D Deficiency", "Vitamin D3 60k IU - Weekly once for 8 weeks", "sig_mock_123", "hash_mock_123"))
-
-    # Record 2: 2 months ago - Acute Bronchitis
-    date_2 = (datetime.now() - timedelta(days=60)).isoformat()
-    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (patient_id, doctor_id, hospital_id, date_2, 'completed', 'Pulmonology', 'Cough, difficulty breathing, wheezing'))
-    appt_id_2 = cursor.lastrowid
-    
-    cursor.execute("INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash) VALUES (?, ?, ?, ?, ?)",
-                   (appt_id_2, "Acute Bronchitis Exacerbation", "Levosalbutamol Inhaler - SOS, Montelukast 10mg - Nightly", "sig_mock_456", "hash_mock_456"))
-
-    # Record 3: 1 week ago - Injury
-    date_3 = (datetime.now() - timedelta(days=7)).isoformat()
-    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (patient_id, doctor_id, hospital_id, date_3, 'completed', 'Orthopedics', 'Ankle pain, swelling after fall'))
-    appt_id_3 = cursor.lastrowid
-    
-    cursor.execute("INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash) VALUES (?, ?, ?, ?, ?)",
-                   (appt_id_3, "Grade 1 Ankle Sprain", "Rest, Ice, Compression, Elevation. Ibuprofen 400mg - SOS for pain", "sig_mock_789", "hash_mock_789"))
-
-    # 4. Future Appointment
-    date_4 = (datetime.now() + timedelta(days=5)).isoformat()
-    cursor.execute("INSERT INTO appointments (patient_id, doctor_id, hospital_id, date_time, status, department, symptoms) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (patient_id, doctor_id, hospital_id, date_4, 'scheduled', 'General Medicine', 'Follow up for ankle'))
+                   (appt_id_1, "Vitamin D Deficiency", "Vitamin D3 60k IU", "sig_1", "hash_1"))
 
     conn.commit()
     conn.close()
+    seed_inventory()
     print("✓ Comprehensive data seeded")
+
+def seed_inventory():
+    """Seed pharmacy inventory with diverse items"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Clear existing to ensure fresh data
+    cursor.execute("DELETE FROM inventory")
+    
+    medicines = [
+        # Tablets/Capsules
+        ('Amoxicillin', 'tablet', '500mg', 100, 15.50),
+        ('Paracetamol', 'tablet', '650mg', 500, 5.00),
+        ('Ibuprofen', 'tablet', '400mg', 200, 8.00),
+        ('Metformin', 'tablet', '500mg', 300, 12.00),
+        ('Atorvastatin', 'tablet', '10mg', 150, 25.00),
+        ('Montelukast', 'tablet', '10mg', 100, 18.00),
+        ('Azithromycin', 'tablet', '500mg', 80, 35.00),
+        ('Pantoprazole', 'tablet', '40mg', 200, 10.00),
+        ('Vitamin D3', 'capsule', '60k IU', 50, 45.00),
+        ('Omeprazole', 'capsule', '20mg', 150, 12.00),
+        
+        # Liquids/Syrups
+        ('Cough Syrup (Dextromethorphan)', 'liquid', '100ml', 50, 120.00),
+        ('Paracetamol Syrup', 'liquid', '60ml', 40, 85.00),
+        ('Antacid Liquid', 'liquid', '200ml', 60, 150.00),
+        ('Multivitamin Syrup', 'liquid', '200ml', 45, 180.00),
+        ('Lactulose Solution', 'liquid', '150ml', 30, 220.00),
+        
+        # Others
+        ('Levosalbutamol Inhaler', 'inhaler', '200 doses', 30, 250.00),
+        ('Insulin Glargine', 'injection', '10ml', 20, 500.00),
+        ('Diclofenac Gel', 'topical', '30g', 40, 95.00)
+    ]
+    
+    cursor.executemany("INSERT INTO inventory (name, type, unit_size, stock, price) VALUES (?, ?, ?, ?, ?)", medicines)
+    conn.commit()
+    conn.close()
+    print("✓ Inventory seeded with diverse items")
+
+def get_all_medicines():
+    """Get all medicines from inventory"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM inventory ORDER BY name")
+    items = cursor.fetchall()
+    conn.close()
+    return [dict(item) for item in items]
 
 # User operations
 def create_user(email, password, name, role, practitioner_type=None, organization_name=None):
@@ -357,6 +430,48 @@ def update_last_login(user_id):
                    (datetime.now(), user_id))
     conn.commit()
     conn.close()
+
+def get_all_users_safe():
+    """Get all users with safe fields (no passwords)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT id, email, name, role, practitioner_type, organization_name, 
+               created_at, last_login 
+        FROM users 
+        ORDER BY created_at DESC
+    ''')
+    users = cursor.fetchall()
+    conn.close()
+    return [dict(user) for user in users]
+
+def get_dashboard_stats():
+    """Get stats for admin dashboard"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    stats = {}
+    
+    # Count users by role
+    cursor.execute("SELECT role, COUNT(*) as count FROM users GROUP BY role")
+    for row in cursor.fetchall():
+        stats[f"{row['role']}_count"] = row['count']
+        
+    # Total patients (fallback if 0 from above)
+    if 'patient_count' not in stats: stats['patient_count'] = 0
+    if 'hospital_count' not in stats: stats['hospital_count'] = 0
+    if 'practitioner_count' not in stats: stats['practitioner_count'] = 0
+    
+    # Total diagnosis (medical records)
+    cursor.execute("SELECT COUNT(*) as count FROM medical_records")
+    stats['diagnosis_count'] = cursor.fetchone()['count']
+    
+    # Pending verifications
+    cursor.execute("SELECT COUNT(*) as count FROM verifications WHERE status IN ('pending_org', 'pending_admin')")
+    stats['pending_verifications'] = cursor.fetchone()['count']
+    
+    conn.close()
+    return stats
 
 # Document operations
 def create_document(user_id, filename, filepath, document_type, file_size):
@@ -536,6 +651,35 @@ def get_all_verifications():
     vers = cursor.fetchall()
     conn.close()
     return [dict(ver) for ver in vers]
+
+def get_practitioner_applications(status=None):
+    """Get practitioner applications by status"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    query = '''
+        SELECT v.*, u.name as user_name, u.email as user_email,
+               u.practitioner_type, u.organization_name
+        FROM verifications v
+        JOIN users u ON v.user_id = u.id
+        WHERE u.role = 'practitioner'
+    '''
+    
+    if status:
+        if status == 'approved':
+            query += " AND v.status = 'approved'"
+        elif status == 'rejected':
+            query += " AND v.status IN ('dismissed', 'org_rejected')"
+        elif status == 'pending':
+            query += " AND v.status IN ('submitted', 'ai_analysis', 'pending_org', 'pending_admin')"
+            
+    query += " ORDER BY v.created_at DESC"
+    
+    cursor.execute(query)
+    vers = cursor.fetchall()
+    conn.close()
+    return [dict(ver) for ver in vers]
+
 
 def get_verification_documents(ver_id):
     """Get all documents for a verification"""
@@ -720,18 +864,35 @@ def update_appointment_status(appt_id, status):
     conn.close()
 
 # Medical Record operations
-def create_medical_record(appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash):
+def create_medical_record(appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash, delivery_required=False, delivery_address=None):
     """Create medical record"""
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash))
+        INSERT INTO medical_records (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash, delivery_required, delivery_address)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (appointment_id, diagnosis_text, prescription_text, doctor_signature, blockchain_hash, delivery_required, delivery_address))
     conn.commit()
     record_id = cursor.lastrowid
     conn.close()
     return record_id
+
+def get_medical_records_by_patient(patient_id):
+    """Get all medical records for a patient"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT mr.*, a.date_time, doc.name as doctor_name, hosp.name as hospital_name
+        FROM medical_records mr
+        JOIN appointments a ON mr.appointment_id = a.id
+        JOIN users doc ON a.doctor_id = doc.id
+        JOIN users hosp ON a.hospital_id = hosp.id
+        WHERE a.patient_id = ?
+        ORDER BY a.date_time DESC
+    ''', (patient_id,))
+    records = cursor.fetchall()
+    conn.close()
+    return [dict(rec) for rec in records]
 
 def store_user_keys(user_id, private_key, public_key):
     conn = get_db()
@@ -814,6 +975,280 @@ def get_medical_records_by_patient(patient_id):
     records = cursor.fetchall()
     conn.close()
     return [dict(row) for row in records]
+
+def get_hospital_stats(hospital_id):
+    """Get statistics for hospital dashboard"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    stats = {}
+    
+    # Total appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE hospital_id = ?", (hospital_id,))
+    stats['total_appointments'] = cursor.fetchone()['count']
+    
+    # Completed appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE hospital_id = ? AND status = 'completed'", (hospital_id,))
+    stats['completed_appointments'] = cursor.fetchone()['count']
+    
+    # Scheduled appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE hospital_id = ? AND status = 'scheduled'", (hospital_id,))
+    stats['scheduled_appointments'] = cursor.fetchone()['count']
+    
+    # Unique patients
+    cursor.execute("SELECT COUNT(DISTINCT patient_id) as count FROM appointments WHERE hospital_id = ?", (hospital_id,))
+    stats['total_patients'] = cursor.fetchone()['count']
+    
+    conn.close()
+    return stats
+
+def get_practitioner_stats(user_id):
+    """Get statistics for practitioner dashboard"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    stats = {}
+    
+    # Total appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ?", (user_id,))
+    stats['total_appointments'] = cursor.fetchone()['count']
+    
+    # Completed appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND status = 'completed'", (user_id,))
+    stats['completed_appointments'] = cursor.fetchone()['count']
+    
+    # Unique patients
+    cursor.execute("SELECT COUNT(DISTINCT patient_id) as count FROM appointments WHERE doctor_id = ?", (user_id,))
+    stats['total_patients'] = cursor.fetchone()['count']
+    
+    # Pending appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND status = 'scheduled'", (user_id,))
+    stats['pending_appointments'] = cursor.fetchone()['count']
+    
+    conn.close()
+    return stats
+
+def get_patient_stats(user_id):
+    """Get statistics for patient dashboard"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    stats = {}
+    
+    # Total appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE patient_id = ?", (user_id,))
+    stats['total_appointments'] = cursor.fetchone()['count']
+    
+    # Upcoming appointments
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE patient_id = ? AND status = 'scheduled'", (user_id,))
+    stats['upcoming_appointments'] = cursor.fetchone()['count']
+    
+    # Completed visits
+    cursor.execute("SELECT COUNT(*) as count FROM appointments WHERE patient_id = ? AND status = 'completed'", (user_id,))
+    stats['completed_visits'] = cursor.fetchone()['count']
+    
+    # Total medical records
+    cursor.execute("""
+        SELECT COUNT(*) as count 
+        FROM medical_records mr
+        JOIN appointments a ON mr.appointment_id = a.id
+        WHERE a.patient_id = ?
+    """, (user_id,))
+    stats['total_records'] = cursor.fetchone()['count']
+    
+    conn.close()
+    return stats
+
+# ============================================================
+# AI ASSISTANT SUPPORT FUNCTIONS
+# ============================================================
+
+def get_available_doctors(department=None):
+    """Get list of available doctors, optionally filtered by department"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    if department:
+        # Try case-insensitive search
+        cursor.execute('''
+            SELECT id, name, email, practitioner_type 
+            FROM users 
+            WHERE role = 'practitioner' AND LOWER(practitioner_type) LIKE LOWER(?)
+        ''', (f'%{department}%',))
+        doctors = cursor.fetchall()
+        
+        # If no match, return all doctors
+        if not doctors:
+            cursor.execute('''
+                SELECT id, name, email, practitioner_type 
+                FROM users 
+                WHERE role = 'practitioner'
+            ''')
+            doctors = cursor.fetchall()
+    else:
+        cursor.execute('''
+            SELECT id, name, email, practitioner_type 
+            FROM users 
+            WHERE role = 'practitioner'
+        ''')
+        doctors = cursor.fetchall()
+    
+    conn.close()
+    return [dict(doc) for doc in doctors]
+
+def get_appointment_by_id(appointment_id):
+    """Get appointment by ID with full details"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT a.*, 
+               pat.name as patient_name,
+               doc.name as doctor_name,
+               hosp.name as hospital_name
+        FROM appointments a
+        LEFT JOIN users pat ON a.patient_id = pat.id
+        LEFT JOIN users doc ON a.doctor_id = doc.id
+        LEFT JOIN users hosp ON a.hospital_id = hosp.id
+        WHERE a.id = ?
+    ''', (appointment_id,))
+    appt = cursor.fetchone()
+    conn.close()
+    return dict(appt) if appt else None
+
+def update_appointment_datetime(appointment_id, new_datetime):
+    """Update appointment date/time"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE appointments 
+        SET date_time = ?
+        WHERE id = ?
+    ''', (new_datetime, appointment_id))
+    conn.commit()
+    conn.close()
+
+def update_appointment_status(appointment_id, status):
+    """Update appointment status"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE appointments 
+        SET status = ?
+        WHERE id = ?
+    ''', (status, appointment_id))
+    conn.commit()
+    conn.close()
+
+def get_available_appointment_slots(doctor_id, date):
+    """Get available time slots for a doctor on a given date"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Get existing appointments for the doctor on that date
+    cursor.execute('''
+        SELECT date_time 
+        FROM appointments 
+        WHERE doctor_id = ? AND date(date_time) = date(?) AND status != 'cancelled'
+    ''', (doctor_id, date))
+    
+    booked_slots = [row['date_time'] for row in cursor.fetchall()]
+    conn.close()
+    
+    # Generate available slots (simplified - in real app, would check doctor schedule)
+    available_slots = []
+    for hour in range(9, 17):  # 9 AM to 5 PM
+        slot_time = f"{date} {hour:02d}:00:00"
+        if slot_time not in booked_slots:
+            available_slots.append(slot_time)
+    
+    return available_slots
+
+def create_ai_action_log(user_id, action_type, action_data, status='pending'):
+    """Log AI-initiated actions for audit trail"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Create ai_action_logs table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ai_action_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            action_type TEXT NOT NULL,
+            action_data TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    
+    cursor.execute('''
+        INSERT INTO ai_action_logs (user_id, action_type, action_data, status)
+        VALUES (?, ?, ?, ?)
+    ''', (user_id, action_type, json.dumps(action_data), status))
+    
+    conn.commit()
+    log_id = cursor.lastrowid
+    conn.close()
+    return log_id
+
+def update_ai_action_log(log_id, status, completed_at=None):
+    """Update AI action log status"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    if completed_at is None:
+        completed_at = datetime.now()
+    
+    cursor.execute('''
+        UPDATE ai_action_logs 
+        SET status = ?, completed_at = ?
+        WHERE id = ?
+    ''', (status, completed_at, log_id))
+    
+    conn.commit()
+    conn.close()
+
+def get_low_stock_items(threshold=20):
+    """Get inventory items below stock threshold"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT * FROM inventory 
+        WHERE stock < ?
+        ORDER BY stock ASC
+    ''', (threshold,))
+    items = cursor.fetchall()
+    conn.close()
+    return [dict(item) for item in items]
+
+def update_pharma_status(record_id, status):
+    """Update pharma processing status"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE medical_records 
+        SET pharma_status = ?
+        WHERE id = ?
+    ''', (status, record_id))
+    conn.commit()
+    conn.close()
+
+def get_recent_prescriptions(limit=50):
+    """Get recent prescriptions for demand forecasting"""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT mr.prescription_text, a.date_time
+        FROM medical_records mr
+        JOIN appointments a ON mr.appointment_id = a.id
+        WHERE mr.prescription_text IS NOT NULL AND mr.prescription_text != ''
+        ORDER BY a.date_time DESC
+        LIMIT ?
+    ''', (limit,))
+    records = cursor.fetchall()
+    conn.close()
+    return [dict(rec) for rec in records]
 
 if __name__ == '__main__':
     init_db()

@@ -5,35 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard - HealthCredX</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); body { font-family: 'Inter', sans-serif; }</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link.active { background-color: #D1FAE5; color: #047857; }
+        .sidebar-link:hover:not(.active) { background-color: #F9FAFB; }
+    </style>
 </head>
-<body>
-    <header class="bg-white border-b border-gray-200">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <span class="text-lg font-semibold text-gray-900">HealthCredX Patient</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <a href="/logout" class="text-sm text-gray-600 hover:text-gray-900">Logout</a>
-                </div>
-            </div>
-        </nav>
-    </header>
+<body class="flex h-screen overflow-hidden">
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col">
+        <div class="p-6 flex items-center gap-3 border-b border-gray-100">
+            <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+            <span class="text-lg font-bold text-gray-900">HealthCredX</span>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <a href="/patient/dashboard" class="sidebar-link flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 rounded-lg active">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-200">
+            <a href="/logout" class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-8 relative">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 p-4 rounded-md {% if category == 'success' %}bg-green-50 text-green-700{% elif category == 'danger' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">Welcome, {{ session.user_name }}</h1>
+            <p class="text-gray-600">Manage your health records and appointments</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Appointments -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">Total Appointments</h3>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_appointments }}</p>
+            </div>
+
+            <!-- Upcoming -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">Upcoming</h3>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.upcoming_appointments }}</p>
+            </div>
+
+            <!-- Completed Visits -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">Completed Visits</h3>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.completed_visits }}</p>
+            </div>
+
+            <!-- Medical Records -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                </div>
+                <h3 class="text-gray-500 text-sm font-medium">Medical Records</h3>
+                <p class="text-2xl font-bold text-gray-900">{{ stats.total_records }}</p>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column: Profile & Appointments -->
-            <div class="space-y-8">
-                <!-- Profile Card -->
+            <!-- Profile Card -->
+            <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Profile</h3>
                     <div class="flex items-center gap-4 mb-6">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-2xl">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-3xl">
                             👤
                         </div>
                         <div>
@@ -42,68 +117,59 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div class="p-3 bg-gray-50 rounded-lg">
-                            <span class="block text-xs text-gray-500 uppercase">Blood Type</span>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Blood Type</span>
                             <span class="font-semibold text-gray-900">{{ profile.blood_type }}</span>
                         </div>
-                        <div class="p-3 bg-gray-50 rounded-lg">
-                            <span class="block text-xs text-gray-500 uppercase">Weight</span>
+                        <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Gender</span>
+                            <span class="font-semibold text-gray-900">{{ profile.gender }}</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Weight</span>
                             <span class="font-semibold text-gray-900">{{ profile.weight }} kg</span>
                         </div>
-                        <div class="p-3 bg-gray-50 rounded-lg">
-                            <span class="block text-xs text-gray-500 uppercase">Height</span>
+                        <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Height</span>
                             <span class="font-semibold text-gray-900">{{ profile.height }} cm</span>
-                        </div>
-                        <div class="p-3 bg-gray-50 rounded-lg">
-                            <span class="block text-xs text-gray-500 uppercase">Gender</span>
-                            <span class="font-semibold text-gray-900">{{ profile.gender }}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Upcoming Appointments -->
+                <!-- Upcoming Appointments Card -->
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Upcoming Appointments</h3>
                     {% if appointments %}
-                        <div class="space-y-4">
+                        <div class="space-y-3">
                         {% for appt in appointments %}
                             {% if appt.status == 'scheduled' %}
-                            <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                <div class="flex-shrink-0 mt-1">
-                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-blue-900">{{ appt.date_time.replace('T', ' ') }}</p>
-                                    <p class="text-xs text-blue-700">{{ appt.hospital_name }} - {{ appt.department }}</p>
-                                    <p class="text-xs text-blue-600">Dr. {{ appt.doctor_name or 'Assigned soon' }}</p>
-                                </div>
+                            <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                <p class="text-sm font-medium text-blue-900">{{ appt.date_time.replace('T', ' ') }}</p>
+                                <p class="text-xs text-blue-700 mt-1">{{ appt.hospital_name }}</p>
+                                <p class="text-xs text-blue-600">{{ appt.department }} - Dr. {{ appt.doctor_name or 'TBA' }}</p>
                             </div>
                             {% endif %}
                         {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-sm text-gray-500">No upcoming appointments.</p>
+                        <p class="text-sm text-gray-500">No upcoming appointments</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Right Column: Medical History & Chatbot -->
-            <div class="lg:col-span-2 space-y-8">
+            <!-- Medical History & AI Chat -->
+            <div class="lg:col-span-2 space-y-6">
                 <!-- AI Chatbot -->
-                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+                <div class="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-bold flex items-center gap-2">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             AI Health Assistant
                         </h3>
                         <span class="text-xs bg-white/20 px-2 py-1 rounded-full">Beta</span>
                     </div>
-                    <p class="text-purple-100 text-sm mb-4">Ask me about your medical history, diagnosis, or prescriptions.</p>
+                    <p class="text-green-100 text-sm mb-4">Ask me about your medical history, or schedule/reschedule appointments</p>
                     
                     <div class="bg-white/10 rounded-lg p-4 h-48 overflow-y-auto mb-4 space-y-3" id="chat-history">
                         <div class="flex gap-2">
@@ -113,47 +179,45 @@
                     </div>
                     
                     <div class="flex gap-2">
-                        <input type="text" id="chat-input" class="flex-1 bg-white/20 border-transparent rounded-lg placeholder-purple-200 text-white focus:bg-white/30 focus:ring-0 focus:border-transparent text-sm px-4 py-2" placeholder="Type your question...">
-                        <button onclick="sendMessage()" class="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-100">Send</button>
+                        <input type="text" id="chat-input" class="flex-1 bg-white/20 border-transparent rounded-lg placeholder-green-200 text-white focus:bg-white/30 focus:ring-0 focus:border-transparent text-sm px-4 py-2" placeholder="Type your question...">
+                        <button onclick="sendMessage()" class="bg-white text-green-600 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-100">Send</button>
                     </div>
                 </div>
 
-                <!-- Medical History Timeline -->
+                <!-- Medical History -->
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-6">Medical History</h3>
                     
+                    {% if history %}
                     <div class="relative border-l-2 border-gray-200 ml-3 space-y-8">
                         {% for record in history %}
                         <div class="relative pl-8">
-                            <!-- Dot -->
-                            <div class="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-purple-600 rounded-full"></div>
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-green-600 rounded-full"></div>
                             
                             <div class="mb-1">
-                                <span class="text-sm font-medium text-purple-600">{{ record.date_time[:10] }}</span>
+                                <span class="text-sm font-medium text-green-600">{{ record.date_time[:10] }}</span>
                                 <span class="text-gray-400 text-xs ml-2">{{ record.hospital_name }}</span>
                             </div>
                             
-                            <h4 class="text-lg font-bold text-gray-900 mb-2">{{ record.department }} Visit</h4>
+                            <h4 class="text-base font-bold text-gray-900 mb-2">{{ record.department }} Visit</h4>
                             
                             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
                                 <div>
                                     <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Diagnosis</span>
-                                    <p class="text-gray-800 mt-1">{{ record.diagnosis_text }}</p>
+                                    <p class="text-gray-800 mt-1 text-sm">{{ record.diagnosis_text }}</p>
                                 </div>
                                 
                                 {% if record.prescription_text %}
                                 <div class="pt-3 border-t border-gray-200">
                                     <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Prescription</span>
-                                    <p class="text-gray-800 mt-1 font-mono text-sm bg-white p-2 rounded border border-gray-200">{{ record.prescription_text }}</p>
+                                    <p class="text-gray-800 mt-1 font-mono text-xs bg-white p-3 rounded border border-gray-200 whitespace-pre-wrap">{{ record.prescription_text }}</p>
                                 </div>
                                 {% endif %}
                                 
                                 <div class="pt-3 border-t border-gray-200 flex justify-between items-center">
                                     <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span class="text-xs text-gray-500">Signed by Dr. {{ record.doctor_name }}</span>
+                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="text-xs text-gray-500">Dr. {{ record.doctor_name }}</span>
                                     </div>
                                     <span class="text-xs font-mono text-gray-400" title="{{ record.blockchain_hash }}">Hash: {{ record.blockchain_hash[:10] }}...</span>
                                 </div>
@@ -161,12 +225,17 @@
                         </div>
                         {% endfor %}
                     </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No medical history available</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </main>
 
     <script>
+        let pendingAction = null;
+
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const history = document.getElementById('chat-history');
@@ -185,22 +254,40 @@
             input.value = '';
             history.scrollTop = history.scrollHeight;
             
-            // Call Real AI API
-            fetch('/api/patient/chat', {
+            // Call AI Assistant API (with appointment management)
+            fetch('/api/patient/ai-assistant', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query: text })
             })
             .then(response => response.json())
             .then(data => {
-                history.innerHTML += `
-                    <div class="flex gap-2">
-                        <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
-                        <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">${data.response}</div>
-                    </div>
-                `;
+                // Check if AI wants to perform an action
+                if (data.action && data.requires_confirmation) {
+                    pendingAction = data.action;
+                    const actionDesc = getActionDescription(data.action);
+                    
+                    history.innerHTML += `
+                        <div class="flex gap-2">
+                            <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
+                            <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">
+                                ${data.response}
+                                <div class="mt-2 p-2 bg-white/10 rounded">
+                                    <p class="text-xs mb-2">${actionDesc}</p>
+                                    <button onclick="confirmAction()" class="bg-white text-green-600 px-3 py-1 rounded text-xs mr-2">Confirm</button>
+                                    <button onclick="cancelAction()" class="bg-red-500 text-white px-3 py-1 rounded text-xs">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    history.innerHTML += `
+                        <div class="flex gap-2">
+                            <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
+                            <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">${data.response}</div>
+                        </div>
+                    `;
+                }
                 history.scrollTop = history.scrollHeight;
             })
             .catch(error => {
@@ -213,6 +300,73 @@
                 `;
             });
         }
+
+        function getActionDescription(action) {
+            const params = action.parameters;
+            if (action.function === 'schedule_appointment') {
+                return `Schedule ${params.department} appointment on ${params.preferred_date || 'next available date'} (${params.preferred_time || 'morning'})`;
+            } else if (action.function === 'reschedule_appointment') {
+                return `Reschedule appointment #${params.appointment_id} to ${params.new_date} (${params.new_time || 'morning'})`;
+            } else if (action.function === 'cancel_appointment') {
+                return `Cancel appointment #${params.appointment_id}`;
+            }
+            return 'Perform action';
+        }
+
+        function confirmAction() {
+            const history = document.getElementById('chat-history');
+            
+            fetch('/api/patient/confirm-action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: pendingAction })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    history.innerHTML += `
+                        <div class="flex gap-2">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-xs">✓</div>
+                            <div class="bg-green-500/30 rounded-lg rounded-tl-none p-2 text-sm">${data.message}</div>
+                        </div>
+                    `;
+                    // Reload page after 2 seconds to show updated appointments
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    history.innerHTML += `
+                        <div class="flex gap-2">
+                            <div class="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center text-xs">!</div>
+                            <div class="bg-red-500/20 rounded-lg rounded-tl-none p-2 text-sm">Error: ${data.error}</div>
+                        </div>
+                    `;
+                }
+                pendingAction = null;
+                history.scrollTop = history.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                pendingAction = null;
+            });
+        }
+
+        function cancelAction() {
+            const history = document.getElementById('chat-history');
+            history.innerHTML += `
+                <div class="flex gap-2">
+                    <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
+                    <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">Action cancelled. How else can I help you?</div>
+                </div>
+            `;
+            pendingAction = null;
+            history.scrollTop = history.scrollHeight;
+        }
+        
+        // Allow Enter key to send message
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
     </script>
 </body>
 </html>

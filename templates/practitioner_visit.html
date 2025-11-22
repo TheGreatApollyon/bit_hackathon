@@ -73,10 +73,62 @@
                 </div>
             </div>
 
-            <!-- Diagnosis Form -->
-            <div class="lg:col-span-2">
+            <!-- Right Column -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Patient History -->
+                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-900">Patient Medical History</h2>
+                        <span class="text-xs text-gray-500">Past consultations from all doctors</span>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto">
+                        {% if patient_history %}
+                        <div class="divide-y divide-gray-200">
+                            {% for record in patient_history %}
+                            <div class="p-6 hover:bg-gray-50 transition-colors">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ record.date_time[:10] }}</p>
+                                        <p class="text-xs text-gray-500">{{ record.doctor_name }} • {{ record.hospital_name }}</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Completed
+                                    </span>
+                                </div>
+                                <div class="mt-2 space-y-2">
+                                    <div>
+                                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Diagnosis</span>
+                                        <p class="text-sm text-gray-700">{{ record.diagnosis_text }}</p>
+                                    </div>
+                                    {% if record.prescription_text %}
+                                    <div>
+                                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Prescription</span>
+                                        <p class="text-sm text-gray-700">{{ record.prescription_text }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-500">
+                            <p>No previous medical history found.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Diagnosis Form -->
                 <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-6">Medical Record Entry</h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-900">Medical Record Entry</h2>
+                        <button type="button" onclick="document.getElementById('handwritingInput').click()" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            <svg class="w-4 h-4 mr-1.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Scan Handwriting
+                        </button>
+                        <input type="file" id="handwritingInput" accept="image/*" class="hidden" onchange="handleHandwritingUpload(this)">
+                    </div>
                     
                     <form action="/practitioner/visit/{{ appointment.id }}" method="POST" class="space-y-6">
                         <div>
@@ -88,9 +140,108 @@
                         </div>
 
                         <div>
-                            <label for="prescription" class="block text-sm font-medium text-gray-700">Prescription</label>
-                            <div class="mt-1">
-                                <textarea id="prescription" name="prescription" rows="4" required class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-3 border" placeholder="Rx: Medicine Name - Dosage - Frequency..."></textarea>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Prescription</label>
+                            
+                            <!-- Medicine Entry Form -->
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div class="col-span-2">
+                                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Medicine Name</label>
+                                        <input type="text" id="medicineSearch" list="medicineList" class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-2" placeholder="Search medicine (e.g. Amoxicillin)...">
+                                        <datalist id="medicineList"></datalist>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Timing</label>
+                                        <div class="flex gap-4 mt-2">
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="timing" value="Before Food" class="text-purple-600 focus:ring-purple-500">
+                                                <span class="ml-2 text-sm text-gray-700">Before Food</span>
+                                            </label>
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="timing" value="After Food" checked class="text-purple-600 focus:ring-purple-500">
+                                                <span class="ml-2 text-sm text-gray-700">After Food</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Frequency</label>
+                                        <div class="flex gap-3 mt-2">
+                                            <label class="inline-flex items-center">
+                                                <input type="checkbox" id="freqM" value="Morning" class="text-purple-600 focus:ring-purple-500">
+                                                <span class="ml-1 text-sm text-gray-700">M</span>
+                                            </label>
+                                            <label class="inline-flex items-center">
+                                                <input type="checkbox" id="freqA" value="Afternoon" class="text-purple-600 focus:ring-purple-500">
+                                                <span class="ml-1 text-sm text-gray-700">A</span>
+                                            </label>
+                                            <label class="inline-flex items-center">
+                                                <input type="checkbox" id="freqN" value="Night" class="text-purple-600 focus:ring-purple-500">
+                                                <span class="ml-1 text-sm text-gray-700">N</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Dosage per time</label>
+                                        <div class="flex gap-2">
+                                            <input type="number" id="dosageQty" min="0.5" step="0.5" value="1" class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-2">
+                                            <span id="dosageUnit" class="inline-flex items-center px-3 rounded-md border border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">unit</span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-500 uppercase mb-1">Duration (Days)</label>
+                                        <input type="number" id="durationDays" min="1" value="5" class="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-2">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                                    <div class="text-sm text-gray-600">
+                                        Total Required: <span id="calcTotal" class="font-bold text-purple-600">-</span>
+                                    </div>
+                                    <button type="button" onclick="addMedicine()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                        Add to List
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Medicine List Table -->
+                            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg mb-4">
+                                <table class="min-w-full divide-y divide-gray-300">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
+                                            <th scope="col" class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Remove</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="prescribedList" class="divide-y divide-gray-200 bg-white">
+                                        <!-- Items will be added here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Hidden Input for Backend -->
+                            <input type="hidden" id="prescription" name="prescription" required>
+                        </div>
+
+                        <!-- Delivery Option -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="delivery_required" name="delivery_required" type="checkbox" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded" onchange="toggleAddressInput(this)">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="delivery_required" class="font-medium text-blue-700">Request Home Delivery</label>
+                                    <p class="text-blue-500">If medicines are out of stock or patient requests delivery.</p>
+                                </div>
+                            </div>
+                            <div id="addressField" class="mt-3 hidden">
+                                <label for="delivery_address" class="block text-xs font-medium text-blue-700 uppercase">Delivery Address</label>
+                                <input type="text" name="delivery_address" id="delivery_address" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-blue-300 rounded-md p-2" placeholder="Enter delivery address">
                             </div>
                         </div>
 
@@ -118,5 +269,182 @@
             </div>
         </div>
     </main>
+    <script>
+        async function handleHandwritingUpload(input) {
+            if (!input.files || !input.files[0]) return;
+            
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            // Show loading state
+            const btn = input.previousElementSibling;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...';
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/practitioner/analyze-handwriting', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const text = result.text;
+                    
+                    // Check for separator
+                    if (text.includes('|')) {
+                        const parts = text.split('|');
+                        document.getElementById('diagnosis').value = parts[0].trim();
+                        if (parts[1]) {
+                            document.getElementById('prescription').value = parts[1].trim();
+                        }
+                    } else {
+                        document.getElementById('diagnosis').value = text;
+                    }
+                    
+                    alert('Handwriting analyzed successfully!');
+                } else {
+                    alert('Error: ' + (result.error || 'Analysis failed'));
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            } finally {
+                // Reset button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                input.value = ''; // Clear input
+            }
+        }
+        // Medicine Logic
+        let medicines = [];
+        let currentMedicine = null;
+        
+        async function loadMedicines() {
+            try {
+                const response = await fetch('/api/medicines');
+                medicines = await response.json();
+                const list = document.getElementById('medicineList');
+                medicines.forEach(med => {
+                    const option = document.createElement('option');
+                    option.value = med.name;
+                    option.innerText = `${med.type} | ${med.unit_size} | Stock: ${med.stock}`;
+                    list.appendChild(option);
+                });
+            } catch (e) {
+                console.error("Failed to load medicines", e);
+            }
+        }
+        
+        // Monitor inputs for calculation
+        const inputs = ['medicineSearch', 'dosageQty', 'durationDays'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateTotal);
+        });
+        
+        document.querySelectorAll('input[name="timing"], input[type="checkbox"]').forEach(el => {
+            el.addEventListener('change', calculateTotal);
+        });
+
+        function calculateTotal() {
+            const name = document.getElementById('medicineSearch').value;
+            const med = medicines.find(m => m.name === name);
+            currentMedicine = med;
+            
+            if (!med) {
+                document.getElementById('dosageUnit').innerText = 'unit';
+                document.getElementById('calcTotal').innerText = '-';
+                return;
+            }
+            
+            // Update unit label
+            let unit = 'units';
+            if (med.type === 'tablet' || med.type === 'capsule') unit = 'tablets';
+            else if (med.type === 'liquid') unit = 'ml';
+            else if (med.type === 'injection') unit = 'ml';
+            document.getElementById('dosageUnit').innerText = unit;
+            
+            // Calculate
+            const dose = parseFloat(document.getElementById('dosageQty').value) || 0;
+            const days = parseInt(document.getElementById('durationDays').value) || 0;
+            
+            let freqCount = 0;
+            if (document.getElementById('freqM').checked) freqCount++;
+            if (document.getElementById('freqA').checked) freqCount++;
+            if (document.getElementById('freqN').checked) freqCount++;
+            
+            const totalQty = dose * freqCount * days;
+            
+            let displayTotal = `${totalQty} ${unit}`;
+            
+            // Bottle calculation for liquids
+            if (med.type === 'liquid') {
+                const bottleSize = parseInt(med.unit_size) || 100; // fallback 100ml
+                const bottles = Math.ceil(totalQty / bottleSize);
+                displayTotal += ` (${bottles} bottle${bottles > 1 ? 's' : ''} of ${med.unit_size})`;
+            }
+            
+            document.getElementById('calcTotal').innerText = displayTotal;
+        }
+        
+        function addMedicine() {
+            const name = document.getElementById('medicineSearch').value;
+            if (!name || !currentMedicine) return;
+            
+            const timing = document.querySelector('input[name="timing"]:checked').value;
+            const freqs = [];
+            if (document.getElementById('freqM').checked) freqs.push('M');
+            if (document.getElementById('freqA').checked) freqs.push('A');
+            if (document.getElementById('freqN').checked) freqs.push('N');
+            
+            const dose = document.getElementById('dosageQty').value;
+            const days = document.getElementById('durationDays').value;
+            const totalText = document.getElementById('calcTotal').innerText;
+            
+            const list = document.getElementById('prescribedList');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900">${name}</td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    ${dose} ${document.getElementById('dosageUnit').innerText} • ${freqs.join('-')} • ${timing} • ${days} days
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">${totalText}</td>
+                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    <button type="button" onclick="this.closest('tr').remove(); updatePrescriptionInput()" class="text-red-600 hover:text-red-900">Remove</button>
+                </td>
+            `;
+            list.appendChild(tr);
+            
+            // Reset form
+            document.getElementById('medicineSearch').value = '';
+            document.getElementById('calcTotal').innerText = '-';
+            currentMedicine = null;
+            
+            updatePrescriptionInput();
+        }
+        
+        function updatePrescriptionInput() {
+            const rows = Array.from(document.querySelectorAll('#prescribedList tr'));
+            const items = rows.map(row => {
+                const cols = row.querySelectorAll('td');
+                return `${cols[0].innerText}: ${cols[1].innerText} (Total: ${cols[2].innerText})`;
+            });
+            document.getElementById('prescription').value = items.join('\n');
+        }
+        
+        function toggleAddressInput(checkbox) {
+            const field = document.getElementById('addressField');
+            if (checkbox.checked) {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+            }
+        }
+        
+        // Load on start
+        loadMedicines();
+    </script>
 </body>
 </html>
