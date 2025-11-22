@@ -19,9 +19,15 @@ if api_key:
 # PATIENT AI ASSISTANT WITH FUNCTION CALLING
 # ============================================================
 
-def patient_assistant(user_query: str, patient_id: int, context: Dict[str, Any]) -> Dict[str, Any]:
+def patient_assistant(user_query: str, patient_id: int, context: Dict[str, Any], conversation_history: List[Dict[str, str]] = None) -> Dict[str, Any]:
     """
-    AI assistant for patients - handles appointment scheduling
+    AI assistant for patients - handles appointment scheduling with conversation context
+    
+    Args:
+        user_query: Current user question/request
+        patient_id: ID of the patient
+        context: Dictionary containing appointments, medical_history, and current_datetime
+        conversation_history: List of previous messages [{"role": "user"/"assistant", "content": "..."}]
     """
     if not api_key:
         return {"response": "AI service is currently unavailable.", "action": None}
@@ -58,28 +64,49 @@ def patient_assistant(user_query: str, patient_id: int, context: Dict[str, Any])
             """
             return {"appointment_id": appointment_id, "reason": reason}
         
-        # Build context
+        # Build conversation context
+        conversation_context = ""
+        if conversation_history:
+            conversation_context = "\n\nPrevious Conversation:\n"
+            for msg in conversation_history[-10:]:  # Last 10 messages for context
+                role = "Patient" if msg.get("role") == "user" else "AI Assistant"
+                conversation_context += f"{role}: {msg.get('content', '')}\n"
+        
+        # Build appointments info
         appointments_info = ""
         appts = context.get('appointments', [])
         if appts:
             appointments_info = "Current Appointments:\n"
             for a in appts:
-                appointments_info += f"- ID:{a.get('id')}, Date:{a.get('date_time','N/A')}, Dept:{a.get('department','N/A')}\n"
+                appointments_info += f"- ID:{a.get('id')}, Date:{a.get('date_time','N/A')}, Dept:{a.get('department','N/A')}, Status:{a.get('status','N/A')}\n"
         else:
             appointments_info = "No appointments scheduled."
         
-        history = context.get('medical_history', 'No medical history')
+        # Get full medical history
+        medical_history = context.get('medical_history', 'No medical history available')
         
-        prompt = f"""You are a medical assistant helping a patient.
+        # Get current date/time
+        current_datetime = context.get('current_datetime', 'Current date/time not available')
+        
+        prompt = f"""You are a helpful medical assistant for a patient.
+
+Current Date and Time: {current_datetime}
 
 {appointments_info}
 
-Medical History:
-{history}
+Complete Medical History:
+{medical_history}
+{conversation_context}
 
-Patient Query: {user_query}
+Current Patient Query: {user_query}
 
-Use the available functions to help schedule, reschedule, or cancel appointments as needed."""
+Instructions:
+- Use the conversation history to maintain context and refer to previous discussions
+- Answer questions about the patient's medical history using the complete records provided
+- Help schedule, reschedule, or cancel appointments using the available functions
+- Be empathetic, clear, and professional
+- When discussing dates, use the current date/time as reference
+- If information is not available in the medical history, clearly state that"""
         
         # Create model with functions as tools
         model =  genai.GenerativeModel('gemini-2.5-flash', tools=[schedule_appointment, reschedule_appointment, cancel_appointment])

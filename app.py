@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from werkzeug.utils import secure_filename
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -732,31 +732,45 @@ def patient_chat():
 def patient_ai_assistant():
     """AI assistant for patients with appointment management"""
     import ai_assistant
+    from datetime import datetime
     
     data = request.get_json()
     user_query = data.get('query')
+    conversation_history = data.get('conversation_history', [])
     
     # Build context
     patient_id = session['user_id']
     appointments = db.get_appointments_by_user(patient_id, 'patient')
-    medical_history = db.get_patient_history(patient_id)
+    medical_records = db.get_patient_history(patient_id)
     
-# Create full medical history for context (up to 20 recent records)
-history_text = ""
-for record in medical_history[:20]:  # Last 20 records
-    # Include date, diagnosis, and any notes if available
-    entry = f"{record['date_time'][:10]}: {record['diagnosis_text']}"
-    if record.get('notes'):
-        entry += f" (Notes: {record['notes']})"
-    history_text += entry + "\n"
-
-context = {
-    'appointments': appointments,
-    'medical_history': history_text
-}
+    # Create comprehensive medical history text with full details
+    history_text = ""
+    if medical_records:
+        for record in medical_records:
+            history_text += f"\n--- Visit on {record.get('date_time', 'Unknown date')} ---\n"
+            history_text += f"Hospital: {record.get('hospital_name', 'N/A')}\n"
+            history_text += f"Department: {record.get('department', 'N/A')}\n"
+            history_text += f"Doctor: Dr. {record.get('doctor_name', 'N/A')}\n"
+            history_text += f"Diagnosis: {record.get('diagnosis_text', 'N/A')}\n"
+            if record.get('prescription_text'):
+                history_text += f"Prescription: {record.get('prescription_text')}\n"
+            if record.get('notes'):
+                history_text += f"Notes: {record.get('notes')}\n"
+            history_text += "\n"
+    else:
+        history_text = "No medical history available."
     
-    # Get AI response
-    result = ai_assistant.patient_assistant(user_query, patient_id, context)
+    # Get current date and time
+    current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S (%A, %B %d, %Y)")
+    
+    context = {
+        'appointments': appointments,
+        'medical_history': history_text,
+        'current_datetime': current_datetime
+    }
+    
+    # Get AI response with conversation history
+    result = ai_assistant.patient_assistant(user_query, patient_id, context, conversation_history)
     
     return jsonify(result)
 

@@ -235,6 +235,42 @@
 
     <script>
         let pendingAction = null;
+        let conversationHistory = [];
+        
+        // Load conversation history from localStorage on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedHistory = localStorage.getItem('patient_chat_history');
+            if (savedHistory) {
+                try {
+                    conversationHistory = JSON.parse(savedHistory);
+                    // Restore chat display
+                    const history = document.getElementById('chat-history');
+                    history.innerHTML = '<div class="flex gap-2"><div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div><div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">Hello! How can I help you understand your health records today?</div></div>';
+                    
+                    conversationHistory.forEach(msg => {
+                        if (msg.role === 'user') {
+                            history.innerHTML += `
+                                <div class="flex gap-2 flex-row-reverse">
+                                    <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">Me</div>
+                                    <div class="bg-white/20 rounded-lg rounded-tr-none p-2 text-sm">${msg.content}</div>
+                                </div>
+                            `;
+                        } else {
+                            history.innerHTML += `
+                                <div class="flex gap-2">
+                                    <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
+                                    <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">${msg.content}</div>
+                                </div>
+                            `;
+                        }
+                    });
+                    history.scrollTop = history.scrollHeight;
+                } catch (e) {
+                    console.error('Error loading chat history:', e);
+                    localStorage.removeItem('patient_chat_history');
+                }
+            }
+        });
 
         function sendMessage() {
             const input = document.getElementById('chat-input');
@@ -243,7 +279,11 @@
             
             if (!text) return;
             
-            // Add user message
+            // Add user message to conversation history
+            conversationHistory.push({role: 'user', content: text});
+            localStorage.setItem('patient_chat_history', JSON.stringify(conversationHistory));
+            
+            // Add user message to display
             history.innerHTML += `
                 <div class="flex gap-2 flex-row-reverse">
                     <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">Me</div>
@@ -254,14 +294,23 @@
             input.value = '';
             history.scrollTop = history.scrollHeight;
             
-            // Call AI Assistant API (with appointment management)
+            // Call AI Assistant API with conversation history
             fetch('/api/patient/ai-assistant', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: text })
+                body: JSON.stringify({ 
+                    query: text,
+                    conversation_history: conversationHistory
+                })
             })
             .then(response => response.json())
             .then(data => {
+                const aiResponse = data.response;
+                
+                // Add AI response to conversation history
+                conversationHistory.push({role: 'assistant', content: aiResponse});
+                localStorage.setItem('patient_chat_history', JSON.stringify(conversationHistory));
+                
                 // Check if AI wants to perform an action
                 if (data.action && data.requires_confirmation) {
                     pendingAction = data.action;
@@ -271,7 +320,7 @@
                         <div class="flex gap-2">
                             <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
                             <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">
-                                ${data.response}
+                                ${aiResponse}
                                 <div class="mt-2 p-2 bg-white/10 rounded">
                                     <p class="text-xs mb-2">${actionDesc}</p>
                                     <button onclick="confirmAction()" class="bg-white text-green-600 px-3 py-1 rounded text-xs mr-2">Confirm</button>
@@ -284,7 +333,7 @@
                     history.innerHTML += `
                         <div class="flex gap-2">
                             <div class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs">AI</div>
-                            <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">${data.response}</div>
+                            <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">${aiResponse}</div>
                         </div>
                     `;
                 }
@@ -357,6 +406,11 @@
                     <div class="bg-white/20 rounded-lg rounded-tl-none p-2 text-sm">Action cancelled. How else can I help you?</div>
                 </div>
             `;
+            
+            // Add cancellation to conversation history
+            conversationHistory.push({role: 'assistant', content: 'Action cancelled. How else can I help you?'});
+            localStorage.setItem('patient_chat_history', JSON.stringify(conversationHistory));
+            
             pendingAction = null;
             history.scrollTop = history.scrollHeight;
         }
@@ -367,6 +421,15 @@
                 sendMessage();
             }
         });
+        
+        // Add button to clear conversation history
+        window.clearChatHistory = function() {
+            if (confirm('Clear conversation history?')) {
+                conversationHistory = [];
+                localStorage.removeItem('patient_chat_history');
+                location.reload();
+            }
+        };
     </script>
 </body>
 </html>
